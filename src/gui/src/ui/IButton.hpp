@@ -10,6 +10,11 @@
 
 #include <SFML/Graphics.hpp>
 
+enum ButtonState {
+    HOVER,
+    CLICKED,
+    IDLE
+};
 class IButton {
     public:
         virtual ~IButton() = default;
