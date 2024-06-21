@@ -15,8 +15,10 @@ void ABotPattern::searchAndTakeRessource(const std::string &ressource)
     {
         queue.push_back({[&]()
                          { doAction(LOOK, ""); }, "LOOK"});
+        return;
     }
 
+    // TODO: find a way to add it to constant, this code is copy paste in RunToLinemate.cpp
     std::unordered_map<std::string, std::function<void()>> actions = {
         {"FORWARD", [&]()
          { doAction(FORWARD, ""); }},
@@ -27,51 +29,28 @@ void ABotPattern::searchAndTakeRessource(const std::string &ressource)
         {"TAKE", [=]()
          { doAction(TAKE, ressource); }}};
 
-    bool resourceFound = false;
-
-    for (const auto &tile : _state.environment.tiles)
+    std::unique_ptr<Tile> tile = _state.environment.getTileByRessource(ressource);
+    if (tile != nullptr)
     {
-        std::cout << "Tile: " << tile.x << " " << tile.y << std::endl;
-
-        int resourceQuantity = 0;
-        if (ressource == "food")
-            resourceQuantity = tile.ressources.food;
-        else if (ressource == "linemate")
-            resourceQuantity = tile.ressources.linemate;
-        else if (ressource == "deraumere")
-            resourceQuantity = tile.ressources.deraumere;
-        else if (ressource == "sibur")
-            resourceQuantity = tile.ressources.sibur;
-        else if (ressource == "mendiane")
-            resourceQuantity = tile.ressources.mendiane;
-        else if (ressource == "phiras")
-            resourceQuantity = tile.ressources.phiras;
-        else if (ressource == "thystame")
-            resourceQuantity = tile.ressources.thystame;
-
-        // std::cout << ressource << ": " << resourceQuantity << std::endl;
-        // std::cout << "distance: " << tile.distance << std::endl;
-
-        if (resourceQuantity > 0)
+        std::pair<int, int> coord = {tile->x, tile->y};
+        std::cout << "tile = " << tile->x << " " << tile->y << std::endl;
+        if (movementMap.find(coord) != movementMap.end())
         {
-            resourceFound = true;
-            std::pair<int, int> coord = {tile.x, tile.y};
-            if (movementMap.find(coord) != movementMap.end())
+            for (const auto &move : movementMap[coord])
             {
-                for (const auto &move : movementMap[coord])
-                {
-                    queue.push_back({actions[move], move});
-                }
+                queue.push_back({actions[move], move});
+                std::cout << "movement to go the tile = " << move << std::endl;
             }
-            queue.push_back({actions["TAKE"], "TAKE"});
-            break;
         }
+        queue.push_back({actions["TAKE"], "TAKE"});
     }
 
-    if (!resourceFound)
+    if (tile == nullptr)
+    {
         queue.push_back({[&]()
                          { doAction(FORWARD, ""); }, "FORWARD"});
-    // TODO: fix this, it is useless to look when bot take a ressource
+    }
+    // This look is to update environment
     queue.push_back({[&]()
                      { doAction(LOOK, ""); }, "LOOK"});
 }
